@@ -16,36 +16,42 @@ canvas.width = canvas.height = CANVAS_SIZE;
 const clearButton = document.createElement("button");
 clearButton.innerHTML = "Clear Canvas";
 clearButton.addEventListener("click", () => {
-    const ctx = canvas.getContext("2d")!;
-    ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    strokes.length = 0;
+    canvas.dispatchEvent(new CustomEvent("drawing-changed"));
 });
 
 app.append(header, canvas, clearButton);
 
 ////**** Drawing with Mouse ****////
 let isDrawing = false;
-let cursorX = 0;
-let cursorY = 0;
 
-const canvasRenderer = canvas.getContext("2d")!;
+interface Point { x: number, y: number }
+let strokes: Point[][] = [];
 
 canvas.addEventListener("mousedown", (e) => {
-    cursorX = e.offsetX;
-    cursorY = e.offsetY;
     isDrawing = true;
+    strokes.push([{ x: e.offsetX, y: e.offsetY }]);
 });
 
 canvas.addEventListener("mousemove", (e) => {
     if (!isDrawing) return;
 
-    canvasRenderer.beginPath();
-    canvasRenderer.moveTo(cursorX, cursorY);
-    cursorX = e.offsetX;
-    cursorY = e.offsetY;
-    canvasRenderer.lineTo(cursorX, cursorY);
-    canvasRenderer.stroke();
+    strokes[strokes.length - 1].push({ x: e.offsetX, y: e.offsetY });
+    canvas.dispatchEvent(new CustomEvent("drawing-changed"));
 });
 
 canvas.addEventListener("mouseup", () => {
     isDrawing = false;
+});
+
+canvas.addEventListener("drawing-changed", () => {
+    const canvasRenderer = canvas.getContext("2d")!;
+
+    canvasRenderer.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+    strokes.forEach(stroke => {
+        canvasRenderer.beginPath();
+        stroke.forEach(({ x, y }, i) => canvasRenderer[i ? 'lineTo' : 'moveTo'](x, y));
+        canvasRenderer.stroke();
+    });
 });
