@@ -20,7 +20,15 @@ clearButton.addEventListener("click", () => {
     canvas.dispatchEvent(new CustomEvent("drawing-changed"));
 });
 
-app.append(header, canvas, clearButton);
+const undoButton = document.createElement("button");
+undoButton.innerHTML = "Undo";
+undoButton.addEventListener("click", undoStroke);
+
+const redoButton = document.createElement("button");
+redoButton.innerHTML = "Redo";
+redoButton.addEventListener("click", redoStroke);
+
+app.append(header, canvas, clearButton, undoButton, redoButton);
 
 ////**** Drawing with Mouse ****////
 let isDrawing = false;
@@ -55,3 +63,20 @@ canvas.addEventListener("drawing-changed", () => {
         canvasRenderer.stroke();
     });
 });
+
+////**** Redo/Undo ****////
+let undoStack: Point[][] = [];
+
+function undoStroke() {
+    if (strokes.length) {
+        undoStack.push(strokes.pop()!);
+        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    }
+}
+
+function redoStroke() {
+    if (undoStack.length) {
+        strokes.push(undoStack.pop()!);
+        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    }
+}
