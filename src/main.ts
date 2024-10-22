@@ -34,7 +34,7 @@ app.append(header, canvas, clearButton, undoButton, redoButton);
 let isDrawing = false;
 
 interface Point { x: number, y: number }
-let strokes: Point[][] = [];
+const strokes: Point[][] = [];
 
 canvas.addEventListener("mousedown", (e) => {
     isDrawing = true;
@@ -65,7 +65,7 @@ canvas.addEventListener("drawing-changed", () => {
 });
 
 ////**** Redo/Undo ****////
-let undoStack: Point[][] = [];
+const undoStack: Point[][] = [];
 
 function undoStroke() {
     if (strokes.length) {
