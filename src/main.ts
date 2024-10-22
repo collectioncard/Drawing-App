@@ -1,4 +1,5 @@
 import "./style.css";
+import { Stroke } from "./Stroke.ts";
 
 const APP_NAME = "Drawing App";
 const CANVAS_SIZE = 256;
@@ -34,17 +35,17 @@ app.append(header, canvas, clearButton, undoButton, redoButton);
 let isDrawing = false;
 
 interface Point { x: number, y: number }
-const strokes: Point[][] = [];
+const strokes: Stroke[] = [];
 
 canvas.addEventListener("mousedown", (e) => {
     isDrawing = true;
-    strokes.push([{ x: e.offsetX, y: e.offsetY }]);
+    strokes.push(new Stroke(e.offsetX, e.offsetY));
 });
 
 canvas.addEventListener("mousemove", (e) => {
     if (!isDrawing) return;
 
-    strokes[strokes.length - 1].push({ x: e.offsetX, y: e.offsetY });
+    strokes[strokes.length - 1].drag(e.offsetX, e.offsetY);
     canvas.dispatchEvent(new CustomEvent("drawing-changed"));
 });
 
@@ -54,18 +55,14 @@ canvas.addEventListener("mouseup", () => {
 
 canvas.addEventListener("drawing-changed", () => {
     const canvasRenderer = canvas.getContext("2d")!;
-
     canvasRenderer.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-    strokes.forEach(stroke => {
-        canvasRenderer.beginPath();
-        stroke.forEach(({ x, y }, i) => canvasRenderer[i ? 'lineTo' : 'moveTo'](x, y));
-        canvasRenderer.stroke();
-    });
+    strokes.forEach(stroke => stroke.display(canvasRenderer));
+    console.log(strokes);
 });
 
 ////**** Redo/Undo ****////
-const undoStack: Point[][] = [];
+const undoStack: Stroke[] = [];
 
 function undoStroke() {
     if (strokes.length) {
