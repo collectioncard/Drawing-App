@@ -21,6 +21,8 @@ clearButton.addEventListener("click", () => {
     canvas.dispatchEvent(new CustomEvent("drawing-changed"));
 });
 
+const buttonContainer = document.createElement("div");
+
 const undoButton = document.createElement("button");
 undoButton.innerHTML = "Undo";
 undoButton.addEventListener("click", undoStroke);
@@ -29,17 +31,40 @@ const redoButton = document.createElement("button");
 redoButton.innerHTML = "Redo";
 redoButton.addEventListener("click", redoStroke);
 
-app.append(header, canvas, clearButton, undoButton, redoButton);
+const thinButton = document.createElement("button");
+thinButton.innerHTML = "Thin Marker";
+thinButton.addEventListener("click", () => setTool("thin"));
+thinButton.classList.add("selectedTool");
+
+const thickButton = document.createElement("button");
+thickButton.innerHTML = "Thick Marker";
+thickButton.addEventListener("click", () => setTool("thick"));
+
+buttonContainer.append(clearButton, undoButton, redoButton, thinButton, thickButton)
+app.append(header, canvas,buttonContainer);
+
+////**** Tool Selection Logic ****////
+const tools = { thin: 2, thick: 5 };
+let currentTool = tools.thin;
+
+function setTool(tool: keyof typeof tools) {
+    currentTool = tools[tool];
+
+    //Keeping track of the buttons like this should help us scale up in the future if asked to add more tools
+    //It might be better to automatically populate this later if it gets more complex
+    const toolButtons = {thin :thinButton, thick: thickButton};
+
+    Object.keys(toolButtons).forEach(key => toolButtons[key as keyof typeof toolButtons].classList.remove("selectedTool"));
+    toolButtons[tool].classList.add("selectedTool");
+}
 
 ////**** Drawing with Mouse ****////
 let isDrawing = false;
-
-interface Point { x: number, y: number }
 const strokes: Stroke[] = [];
 
 canvas.addEventListener("mousedown", (e) => {
     isDrawing = true;
-    strokes.push(new Stroke(e.offsetX, e.offsetY));
+    strokes.push(new Stroke(e.offsetX, e.offsetY, currentTool));
 });
 
 canvas.addEventListener("mousemove", (e) => {
@@ -58,7 +83,6 @@ canvas.addEventListener("drawing-changed", () => {
     canvasRenderer.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
     strokes.forEach(stroke => stroke.display(canvasRenderer));
-    console.log(strokes);
 });
 
 ////**** Redo/Undo ****////
