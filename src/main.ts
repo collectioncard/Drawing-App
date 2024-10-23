@@ -1,5 +1,6 @@
 import "./style.css";
 import { Stroke } from "./Stroke.ts";
+import { ToolPreview } from "./ToolPreview";
 
 const APP_NAME = "Drawing App";
 const CANVAS_SIZE = 256;
@@ -56,11 +57,16 @@ function setTool(tool: keyof typeof tools) {
 
     Object.keys(toolButtons).forEach(key => toolButtons[key as keyof typeof toolButtons].classList.remove("selectedTool"));
     toolButtons[tool].classList.add("selectedTool");
+
+    //Update the preview tool size
+    toolPreview!.setToolSize(currentTool);
 }
 
 ////**** Drawing with Mouse ****////
 let isDrawing = false;
 const strokes: Stroke[] = [];
+
+let toolPreview = new ToolPreview(-1, -1, currentTool);
 
 canvas.addEventListener("mousedown", (e) => {
     isDrawing = true;
@@ -68,14 +74,20 @@ canvas.addEventListener("mousedown", (e) => {
 });
 
 canvas.addEventListener("mousemove", (e) => {
-    if (!isDrawing) return;
-
-    strokes[strokes.length - 1].drag(e.offsetX, e.offsetY);
-    canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    if(isDrawing) {
+        strokes[strokes.length - 1].drag(e.offsetX, e.offsetY);
+        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    }else {
+        toolPreview!.movePreview(e.offsetX, e.offsetY);
+        canvas.dispatchEvent(new CustomEvent("tool-moved"));
+    }
 });
 
 canvas.addEventListener("mouseup", () => {
     isDrawing = false;
+
+    //I want the preview to appear immediately after drawing
+    canvas.dispatchEvent(new CustomEvent("tool-moved"));
 });
 
 canvas.addEventListener("drawing-changed", () => {
@@ -83,6 +95,14 @@ canvas.addEventListener("drawing-changed", () => {
     canvasRenderer.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
     strokes.forEach(stroke => stroke.display(canvasRenderer));
+});
+
+canvas.addEventListener("tool-moved", () => {
+    const canvasRenderer = canvas.getContext("2d")!;
+    canvasRenderer.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+    strokes.forEach(stroke => stroke.display(canvasRenderer));
+    toolPreview!.display(canvasRenderer);
 });
 
 ////**** Redo/Undo ****////
