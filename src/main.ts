@@ -46,13 +46,20 @@ const stickerDiv = document.createElement("div");
 const stickerButtons: string[] = ["🐢", "🎃", "🔥"];
 const stickerElements: HTMLButtonElement[] = [];
 
-stickerButtons.forEach(sticker => {
-    const stickerButton = document.createElement("button");
-    stickerButton.innerHTML = sticker;
-    stickerButton.addEventListener("click", () => setSticker(sticker));
-    stickerElements.push(stickerButton);
-    stickerDiv.append(stickerButton);
+const customStickerButton = document.createElement("button");
+customStickerButton.innerHTML = "Custom Sticker";
+customStickerButton.addEventListener("click", () => {
+    const customSticker = prompt("Custom sticker text:", "💚");
+    if (customSticker && stickerButtons.lastIndexOf(customSticker) === -1) {
+        stickerButtons.push(customSticker);
+        refreshStickerButtons();
+    }
+    if (customSticker) {
+        setSticker(customSticker);
+    }
 });
+
+refreshStickerButtons() // Initialize sticker buttons
 
 buttonContainer.append(clearButton, undoButton, redoButton, thinButton, thickButton);
 app.append(header, canvas, stickerDiv, buttonContainer);
@@ -163,4 +170,20 @@ function clearButtonSelection() {
     thinButton.classList.remove("selectedTool");
     thickButton.classList.remove("selectedTool");
     stickerElements.forEach(button => button.classList.remove("selectedTool"));
+}
+
+function refreshStickerButtons() {
+    stickerElements.length = 0;
+    stickerDiv.innerHTML = '';
+
+    stickerButtons.forEach(sticker => {
+        const stickerButton = document.createElement("button");
+        stickerButton.innerHTML = sticker;
+        stickerButton.addEventListener("click", () => setSticker(sticker));
+        stickerElements.push(stickerButton);
+        stickerDiv.append(stickerButton);
+    });
+
+    stickerDiv.append(customStickerButton);
+
 }
