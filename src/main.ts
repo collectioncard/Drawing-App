@@ -34,59 +34,95 @@ redoButton.addEventListener("click", redoStroke);
 
 const thinButton = document.createElement("button");
 thinButton.innerHTML = "Thin Marker";
-thinButton.addEventListener("click", () => setTool("thin"));
+thinButton.addEventListener("click", () => setTool(2));
 thinButton.classList.add("selectedTool");
 
 const thickButton = document.createElement("button");
 thickButton.innerHTML = "Thick Marker";
-thickButton.addEventListener("click", () => setTool("thick"));
+thickButton.addEventListener("click", () => setTool(5));
 
-buttonContainer.append(clearButton, undoButton, redoButton, thinButton, thickButton)
-app.append(header, canvas,buttonContainer);
+const stickerDiv = document.createElement("div");
+
+const stickerButtons: string[] = ["🐢", "🎃", "🔥"];
+const stickerElements: HTMLButtonElement[] = [];
+
+stickerButtons.forEach(sticker => {
+    const stickerButton = document.createElement("button");
+    stickerButton.innerHTML = sticker;
+    stickerButton.addEventListener("click", () => setSticker(sticker));
+    stickerElements.push(stickerButton);
+    stickerDiv.append(stickerButton);
+});
+
+buttonContainer.append(clearButton, undoButton, redoButton, thinButton, thickButton);
+app.append(header, canvas, stickerDiv, buttonContainer);
 
 ////**** Tool Selection Logic ****////
-const tools = { thin: 2, thick: 5 };
-let currentTool = tools.thin;
+let currentTool: number | null = 2; //defaults to thin marker
+let selectedSticker: string | null = null;
 
-function setTool(tool: keyof typeof tools) {
-    currentTool = tools[tool];
+function setTool(toolSize: number) {
+    currentTool = toolSize;
+    selectedSticker = null;
 
-    //Keeping track of the buttons like this should help us scale up in the future if asked to add more tools
-    //It might be better to automatically populate this later if it gets more complex
-    const toolButtons = {thin :thinButton, thick: thickButton};
+    clearButtonSelection();
 
-    Object.keys(toolButtons).forEach(key => toolButtons[key as keyof typeof toolButtons].classList.remove("selectedTool"));
-    toolButtons[tool].classList.add("selectedTool");
+    if (toolSize === 2) {
+        thinButton.classList.add("selectedTool");
+    } else if (toolSize === 5) {
+        thickButton.classList.add("selectedTool");
+    }
 
-    //Update the preview tool size
-    toolPreview!.setToolSize(currentTool);
+    toolPreview!.setToolSize(toolSize);
+}
+
+function setSticker(sticker: string) {
+    currentTool = null;
+    selectedSticker = sticker;
+    clearButtonSelection();
+    stickerElements.forEach(button => {
+        if (button.innerHTML === sticker) button.classList.add("selectedTool");
+    });
+
+    toolPreview.setSticker(sticker);
 }
 
 ////**** Drawing with Mouse ****////
 let isDrawing = false;
+let currentStroke: Stroke | null = null;
 const strokes: Stroke[] = [];
 
-let toolPreview = new ToolPreview(-1, -1, currentTool);
+let toolPreview = new ToolPreview();
 
 canvas.addEventListener("mousedown", (e) => {
     isDrawing = true;
-    strokes.push(new Stroke(e.offsetX, e.offsetY, currentTool));
+    if (selectedSticker) {
+        currentStroke = new Stroke(e.offsetX, e.offsetY, null, selectedSticker);
+        strokes.push(currentStroke);
+        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    } else if (currentTool !== null) {
+        currentStroke = new Stroke(e.offsetX, e.offsetY, currentTool);
+        strokes.push(currentStroke);
+    }
+
+    //Move the preview away from the screen. It looks wacky when you start drawing
+    toolPreview.movePreview(-100, -100);
+
 });
 
 canvas.addEventListener("mousemove", (e) => {
-    if(isDrawing) {
-        strokes[strokes.length - 1].drag(e.offsetX, e.offsetY);
+    if (isDrawing && currentStroke) {
+        currentStroke.drag(e.offsetX, e.offsetY);
         canvas.dispatchEvent(new CustomEvent("drawing-changed"));
-    }else {
-        toolPreview!.movePreview(e.offsetX, e.offsetY);
+    } else {
+        toolPreview.movePreview(e.offsetX, e.offsetY);
         canvas.dispatchEvent(new CustomEvent("tool-moved"));
     }
 });
 
 canvas.addEventListener("mouseup", () => {
     isDrawing = false;
-
-    //I want the preview to appear immediately after drawing
+    currentStroke = null;
     canvas.dispatchEvent(new CustomEvent("tool-moved"));
 });
 
@@ -102,7 +138,7 @@ canvas.addEventListener("tool-moved", () => {
     canvasRenderer.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
     strokes.forEach(stroke => stroke.display(canvasRenderer));
-    toolPreview!.display(canvasRenderer);
+    toolPreview.display(canvasRenderer);
 });
 
 ////**** Redo/Undo ****////
@@ -120,4 +156,11 @@ function redoStroke() {
         strokes.push(undoStack.pop()!);
         canvas.dispatchEvent(new CustomEvent("drawing-changed"));
     }
+}
+
+////**** Helper Functions ****////
+function clearButtonSelection() {
+    thinButton.classList.remove("selectedTool");
+    thickButton.classList.remove("selectedTool");
+    stickerElements.forEach(button => button.classList.remove("selectedTool"));
 }
