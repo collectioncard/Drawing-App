@@ -41,6 +41,10 @@ const thickButton = document.createElement("button");
 thickButton.innerHTML = "Thick Marker";
 thickButton.addEventListener("click", () => setTool(5));
 
+const exportButton = document.createElement("button");
+exportButton.innerHTML = "Export";
+exportButton.addEventListener("click", exportCanvas);
+
 const stickerDiv = document.createElement("div");
 
 const stickerButtons: string[] = ["🐢", "🎃", "🔥"];
@@ -50,18 +54,16 @@ const customStickerButton = document.createElement("button");
 customStickerButton.innerHTML = "Custom Sticker";
 customStickerButton.addEventListener("click", () => {
     const customSticker = prompt("Custom sticker text:", "💚");
-    if (customSticker && stickerButtons.lastIndexOf(customSticker) === -1) {
-        stickerButtons.push(customSticker);
-        refreshStickerButtons();
-    }
     if (customSticker) {
+        stickerButtons.lastIndexOf(customSticker) === -1 ? stickerButtons.push(customSticker) : null;
+        refreshStickerButtons();
         setSticker(customSticker);
     }
 });
 
 refreshStickerButtons() // Initialize sticker buttons
 
-buttonContainer.append(clearButton, undoButton, redoButton, thinButton, thickButton);
+buttonContainer.append(clearButton, undoButton, redoButton, thinButton, thickButton, exportButton);
 app.append(header, canvas, stickerDiv, buttonContainer);
 
 ////**** Tool Selection Logic ****////
@@ -74,11 +76,7 @@ function setTool(toolSize: number) {
 
     clearButtonSelection();
 
-    if (toolSize === 2) {
-        thinButton.classList.add("selectedTool");
-    } else if (toolSize === 5) {
-        thickButton.classList.add("selectedTool");
-    }
+    toolSize === 2 ? thinButton.classList.add("selectedTool") : thickButton.classList.add("selectedTool");
 
     toolPreview!.setToolSize(toolSize);
 }
@@ -185,5 +183,18 @@ function refreshStickerButtons() {
     });
 
     stickerDiv.append(customStickerButton);
+}
 
+function exportCanvas() {
+    const exportCanvas = document.createElement("canvas");
+    exportCanvas.width = exportCanvas.height = 1024;
+
+    const exportContext = exportCanvas.getContext("2d")!;
+    exportContext.scale(4, 4);
+    strokes.forEach(stroke => stroke.display(exportContext));
+
+    const link = document.createElement("a");
+    link.href = exportCanvas.toDataURL( "image/png");
+    link.download = "drawing.png";
+    link.click();
 }
