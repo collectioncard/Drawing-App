@@ -16,13 +16,16 @@ const canvas = document.createElement("canvas");
 canvas.width = canvas.height = CANVAS_SIZE;
 
 const clearButton = document.createElement("button");
-clearButton.innerHTML = "Clear Canvas";
+clearButton.innerHTML = "Clear Canvas...";
 clearButton.addEventListener("click", () => {
-    strokes.length = 0;
-    canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    const confirmClear = confirm("Are you sure you want to clear your drawing?");
+    if (confirmClear){
+        strokes.length = 0;
+        canvas.dispatchEvent(new CustomEvent("drawing-changed"));
+    }
 });
 
-const buttonContainer = document.createElement("div");
+const utilityButtonContainer = document.createElement("div");
 
 const undoButton = document.createElement("button");
 undoButton.innerHTML = "Undo";
@@ -31,6 +34,12 @@ undoButton.addEventListener("click", undoStroke);
 const redoButton = document.createElement("button");
 redoButton.innerHTML = "Redo";
 redoButton.addEventListener("click", redoStroke);
+
+const exportButton = document.createElement("button");
+exportButton.innerHTML = "Export";
+exportButton.addEventListener("click", exportCanvas);
+
+const drawingToolsContainer = document.createElement("div");
 
 const thinButton = document.createElement("button");
 thinButton.innerHTML = "Thin Marker";
@@ -41,9 +50,6 @@ const thickButton = document.createElement("button");
 thickButton.innerHTML = "Thick Marker";
 thickButton.addEventListener("click", () => setTool(5));
 
-const exportButton = document.createElement("button");
-exportButton.innerHTML = "Export";
-exportButton.addEventListener("click", exportCanvas);
 
 const stickerDiv = document.createElement("div");
 
@@ -63,8 +69,9 @@ customStickerButton.addEventListener("click", () => {
 
 refreshStickerButtons() // Initialize sticker buttons
 
-buttonContainer.append(clearButton, undoButton, redoButton, thinButton, thickButton, exportButton);
-app.append(header, canvas, stickerDiv, buttonContainer);
+drawingToolsContainer.append(thinButton, thickButton);
+utilityButtonContainer.append(clearButton, undoButton, redoButton, exportButton);
+app.append(header, canvas, stickerDiv, drawingToolsContainer, utilityButtonContainer);
 
 ////**** Tool Selection Logic ****////
 let currentTool: number | null = 2; //defaults to thin marker
