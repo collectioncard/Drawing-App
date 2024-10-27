@@ -3,6 +3,7 @@ export class ToolPreview {
     mouseY: number;
     private toolRadius: number | null = 1;
     private sticker : string | null = null;
+    private color: string = "#000000";
 
     setToolSize(toolSize: number) {
         this.toolRadius = toolSize / 2;
@@ -19,6 +20,10 @@ export class ToolPreview {
         this.toolRadius = null;
     }
 
+    setColor(color: string) {
+        this.color = color;
+    }
+
     display(ctx: CanvasRenderingContext2D) {
 
         if (this.toolRadius === null && this.sticker) {
@@ -28,7 +33,7 @@ export class ToolPreview {
         }else if (this.toolRadius !== null) {
             //The previous draw action might have changed the width of the line, so reset it
             ctx.lineWidth = 1;
-
+            ctx.fillStyle = this.color;
             ctx.beginPath();
             ctx.arc(this.mouseX, this.mouseY, this.toolRadius, 0, 2 * Math.PI);
             ctx.fill();

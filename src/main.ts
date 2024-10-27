@@ -35,6 +35,14 @@ const redoButton = document.createElement("button");
 redoButton.innerHTML = "Redo";
 redoButton.addEventListener("click", redoStroke);
 
+const colorPickerButton = document.createElement("input");
+colorPickerButton.type = "color";
+colorPickerButton.value = "#000000"; // Default color is black
+colorPickerButton.addEventListener("input", (e) => {
+    selectedColor = (e.target as HTMLInputElement).value;
+    toolPreview.setColor(selectedColor);
+});
+
 const exportButton = document.createElement("button");
 exportButton.innerHTML = "Export";
 exportButton.addEventListener("click", exportCanvas);
@@ -69,7 +77,7 @@ customStickerButton.addEventListener("click", () => {
 
 refreshStickerButtons() // Initialize sticker buttons
 
-drawingToolsContainer.append(thinButton, thickButton);
+drawingToolsContainer.append(thinButton, thickButton, colorPickerButton);
 utilityButtonContainer.append(clearButton, undoButton, redoButton, exportButton);
 app.append(header, canvas, stickerDiv, drawingToolsContainer, utilityButtonContainer);
 
@@ -102,6 +110,8 @@ function setSticker(sticker: string) {
 ////**** Drawing with Mouse ****////
 let isDrawing = false;
 let currentStroke: Stroke | null = null;
+let selectedColor = "#000000";
+
 const strokes: Stroke[] = [];
 
 let toolPreview = new ToolPreview();
@@ -113,7 +123,7 @@ canvas.addEventListener("mousedown", (e) => {
         strokes.push(currentStroke);
         canvas.dispatchEvent(new CustomEvent("drawing-changed"));
     } else if (currentTool !== null) {
-        currentStroke = new Stroke(e.offsetX, e.offsetY, currentTool);
+        currentStroke = new Stroke(e.offsetX, e.offsetY, currentTool, null, selectedColor);
         strokes.push(currentStroke);
     }
 
