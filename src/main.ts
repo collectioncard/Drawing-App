@@ -115,9 +115,11 @@ let selectedColor = "#000000";
 const strokes: Stroke[] = [];
 
 let toolPreview = new ToolPreview();
+let hidePreview : boolean = false;
 
 canvas.addEventListener("mousedown", (e) => {
     isDrawing = true;
+    hidePreview = true;
     if (selectedSticker) {
         currentStroke = new Stroke(e.offsetX, e.offsetY, null, selectedSticker);
         strokes.push(currentStroke);
@@ -126,10 +128,6 @@ canvas.addEventListener("mousedown", (e) => {
         currentStroke = new Stroke(e.offsetX, e.offsetY, currentTool, null, selectedColor);
         strokes.push(currentStroke);
     }
-
-    //Move the preview away from the screen. It looks wacky when you start drawing
-    toolPreview.movePreview(-100, -100);
-
 });
 
 canvas.addEventListener("mousemove", (e) => {
@@ -137,14 +135,19 @@ canvas.addEventListener("mousemove", (e) => {
         currentStroke.drag(e.offsetX, e.offsetY);
         canvas.dispatchEvent(new CustomEvent("drawing-changed"));
     } else {
+        hidePreview = false;
         toolPreview.movePreview(e.offsetX, e.offsetY);
         canvas.dispatchEvent(new CustomEvent("tool-moved"));
     }
 });
 
 canvas.addEventListener("mouseup", () => {
-    isDrawing = false;
     currentStroke = null;
+    canvas.dispatchEvent(new CustomEvent("tool-moved"));
+});
+
+canvas.addEventListener("mouseout", () => {
+    hidePreview = true
     canvas.dispatchEvent(new CustomEvent("tool-moved"));
 });
 
@@ -160,7 +163,9 @@ canvas.addEventListener("tool-moved", () => {
     canvasRenderer.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
     strokes.forEach(stroke => stroke.display(canvasRenderer));
-    toolPreview.display(canvasRenderer);
+    if (!hidePreview) {
+        toolPreview.display(canvasRenderer);
+    }
 });
 
 ////**** Redo/Undo ****////
