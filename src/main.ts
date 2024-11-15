@@ -1,9 +1,10 @@
 import "./style.css";
 import { Stroke } from "./Stroke.ts";
-import { ToolPreview } from "./ToolPreview";
+import { ToolPreview } from "./ToolPreview.ts";
 
 const APP_NAME = "Drawing App";
 const CANVAS_SIZE = 256;
+const DEFAULT_COLOR = "#000000";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
 ////**** Page Content ****////
@@ -37,7 +38,7 @@ redoButton.addEventListener("click", redoStroke);
 
 const colorPickerButton = document.createElement("input");
 colorPickerButton.type = "color";
-colorPickerButton.value = "#000000"; // Default color is black
+colorPickerButton.value = DEFAULT_COLOR; // Default color is black
 colorPickerButton.addEventListener("input", (e) => {
     selectedColor = (e.target as HTMLInputElement).value;
     toolPreview.setColor(selectedColor);
@@ -51,12 +52,12 @@ const drawingToolsContainer = document.createElement("div");
 
 const thinButton = document.createElement("button");
 thinButton.innerHTML = "Thin Marker";
-thinButton.addEventListener("click", () => setTool(2));
+thinButton.addEventListener("click", () => setDrawingTool(2));
 thinButton.classList.add("selectedTool");
 
 const thickButton = document.createElement("button");
 thickButton.innerHTML = "Thick Marker";
-thickButton.addEventListener("click", () => setTool(5));
+thickButton.addEventListener("click", () => setDrawingTool(5));
 
 
 const stickerDiv = document.createElement("div");
@@ -85,7 +86,7 @@ app.append(header, canvas, stickerDiv, drawingToolsContainer, utilityButtonConta
 let currentTool: number | null = 2; //defaults to thin marker
 let selectedSticker: string | null = null;
 
-function setTool(toolSize: number) {
+function setDrawingTool(toolSize: number) {
     currentTool = toolSize;
     selectedSticker = null;
 
@@ -110,11 +111,11 @@ function setSticker(sticker: string) {
 ////**** Drawing with Mouse ****////
 let isDrawing = false;
 let currentStroke: Stroke | null = null;
-let selectedColor = "#000000";
+let selectedColor = DEFAULT_COLOR;
 
 const strokes: Stroke[] = [];
 
-let toolPreview = new ToolPreview();
+const toolPreview = new ToolPreview();
 let hidePreview : boolean = false;
 
 canvas.addEventListener("mousedown", (e) => {
